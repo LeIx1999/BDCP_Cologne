@@ -2,6 +2,12 @@ import pandas as pd
 import numpy as np
 from sentence_transformers import SentenceTransformer, util
 import pickle
+import sys
+from InstructorEmbedding import INSTRUCTOR
+from sentence_transformers import SentenceTransformer, util
+
+#model = INSTRUCTOR('hkunlp/instructor-xl')
+model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 
 # read in embeddings
 job_embeddings = np.load("job_embeddings.npy")
@@ -61,4 +67,11 @@ result_jobs_degrees_comparison = []
 for i in range(len(job_embeddings[:9])):
     result_jobs_degrees_comparison.append({data.iloc[i,1]: get_degrees_for_job(job_embeddings[i], mean_degree_embeddings_list)})
 
-1+1
+def create_embeddings_from_input(input: list):
+    input_as_string = ""
+    for element in input:
+        input_as_string = input_as_string + " " + element
+    input_embedding = model.encode(input_as_string)
+
+if len(sys.argv) > 1:
+    input_embeddings = create_embeddings_from_input(sys.argv[1:])
