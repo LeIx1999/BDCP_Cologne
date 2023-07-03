@@ -5,15 +5,14 @@ import pickle
 import sys
 from InstructorEmbedding import INSTRUCTOR
 from sentence_transformers import SentenceTransformer, util
+from sklearn.metrics.pairwise import cosine_similarity
 
-# model = INSTRUCTOR('hkunlp/instructor-xl')
-model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+model = INSTRUCTOR('hkunlp/instructor-xl')
 
 # read in embeddings
-job_embeddings = np.load("job_embeddings.npy")
-# job_embeddings = np.loadtxt("job_embeddings_instruct.txt")
+job_embeddings = np.loadtxt("job_embeddings_instruct.txt")
 
-with open("module_embeddings.pkl", "rb") as fp:
+with open("module_embeddings_instruct.pkl", "rb") as fp:
     module_embeddings_dicts = pickle.load(fp)
 
 # load job list data
@@ -53,9 +52,11 @@ for degree in unique_degrees:
 def get_degrees_for_job(job_embedding: np.array, degree_embeddings: list, n_degrees:int = 5) -> list:
     #calculate similarity of two vectors
     degree_embeddings_values = [list(element.values())[0]for element in degree_embeddings]
-    distance = util.dot_score(degree_embeddings_values, job_embedding).tolist()
-
-    distance = [element[0] for element in distance]
+    distance_list = []
+    for degree in degree_embeddings_values:
+        distance_list.append(cosine_similarity(degree, job_embedding.reshape(1, -1)))
+    
+    distance = [float(element) for element in distance_list]
     distance_sorted = distance.copy()
     distance_sorted.sort(reverse=True)
 
@@ -74,12 +75,9 @@ for i in range(len(job_embeddings[:9])):
     result_jobs_degrees_comparison.append({data.iloc[i,1]: get_degrees_for_job(job_embeddings[i], mean_degree_embeddings_list)})
 
 
-def create_embeddings_from_input(input: list):
-    input_as_string = ""
-    for element in input:
-        input_as_string = input_as_string + " " + element
-    input_embedding = model.encode(input_as_string)
-    return input_embedding
+def create_embeddings_from_input(input: str):
+    return model.encode(input)
+
 
 # def get_jobs_for_input(input_embedding: np.array, job_embedding: np.array,  n_jobs:int = 5) -> list:
 #     #calculate distance of two vectors
@@ -98,8 +96,11 @@ def create_embeddings_from_input(input: list):
 def get_degrees_for_input(input_embedding: np.array, degree_embeddings: list, n_degrees:int = 5) -> list:
     #calculate similarity of two vectors
     degree_embeddings_values = [list(element.values())[0] for element in degree_embeddings]
-    distance = util.dot_score(degree_embeddings_values, input_embedding).tolist()
-    distance = [element[0] for element in distance]
+    distance_list = []
+    for degree in degree_embeddings_values:
+        distance_list.append(cosine_similarity(degree, input_embedding.reshape(1, -1)))
+    
+    distance = [float(element) for element in distance_list]
     distance_sorted = distance.copy()
     distance_sorted.sort(reverse=True)
 
@@ -110,7 +111,6 @@ def get_degrees_for_input(input_embedding: np.array, degree_embeddings: list, n_
 
     return degrees_with_distance
 
-if len(sys.argv) > 1:
-    input_embedding = create_embeddings_from_input(sys.argv[1:])
-    #most_similar_jobs = get_jobs_for_input(input_embedding, job_embeddings)
-    most_similar_degrees = get_degrees_for_input(input_embedding, mean_degree_embeddings_list)
+input_embedding = create_embeddings_from_input("Ich kann gut in Java programmieren und kann gut mit Computern umgehen")
+
+most_similar_degrees = get_degrees_for_input(input_embedding, mean_degree_embeddings_list)
