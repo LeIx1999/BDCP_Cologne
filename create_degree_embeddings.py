@@ -37,5 +37,20 @@ with open("module_embeddings.pkl", "wb") as fp:
     pickle.dump(embedding_list, fp)
 
 
+# create degree embeddings
+#create set of unique degrees
+unique_degrees = set([list(element.keys())[0].split('_')[0] for element in embedding_list])
 
+mean_degree_embeddings_list = []
 
+# iterate through degrees
+for degree in unique_degrees:
+    degree_embedding_list = []
+    for module in embedding_list:
+        if degree in list(module.keys())[0]:
+            degree_embedding_list.append(list(module.values())[0])
+    mean_degree_embeddings_list.append({degree: np.mean(degree_embedding_list, axis=0)})
+
+# save embeddings
+with open("degree_embeddings.pkl", "wb") as fp:
+    pickle.dump(mean_degree_embeddings_list, fp)

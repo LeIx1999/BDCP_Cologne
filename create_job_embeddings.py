@@ -25,4 +25,3 @@ with open("embeddings.txt", "ab") as f:
         print(instruction_job_list.index(element))
 
 
-
